@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AniVault — аниме каталог</title>
+    <style>
+        :root {
+            --bg: #07040a;
+            --card: #140a10;
+            --line: #3a1220;
+            --text: #fbeff2;
+            --mute: #a58a94;
+            --red: #ff1744;
+            --red2: #b0002a;
+            --ok: #25d98a
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0
+        }
+
+        body {
+            background: radial-gradient(900px 500px at 15% -5%, rgba(255, 23, 68, .28), transparent 60%), radial-gradient(800px 500px at 100% 10%, rgba(176, 0, 42, .3), transparent 55%), var(--bg);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            min-height: 100vh
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(16px);
+            background: rgba(7, 4, 10, .85);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 4px 30px rgba(255, 23, 68, .15);
+            padding: 14px 20px
+        }
+
+        .top {
+            max-width: 1350px;
+            margin: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 0 12px var(--red), 0 0 30px var(--red)
+        }
+
+        .logo b {
+            color: var(--red)
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: var(--card);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--line)
+        }
+
+        .tab {
+            border: 0;
+            background: none;
+            color: var(--mute);
+            padding: 9px 18px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            transition: .2s
+        }
+
+        .tab.on {
+            background: linear-gradient(135deg, var(--red), var(--red2));
+            color: #fff;
+            box-shadow: 0 0 18px rgba(255, 23, 68, .6)
+        }
+
+        .search {
+            flex: 1;
+            min-width: 220px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            transition: .2s
+        }
+
+        .search:focus {
+            border-color: var(--red);
+            box-shadow: 0 0 16px rgba(255, 23, 68, .4)
+        }
+
+        .filters {
+            max-width: 1350px;
+            margin: 12px auto 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px
+        }
+
+        select {
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: var(--card);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            outline: none
+        }
+
+        select:hover,
+        select:focus {
+            border-color: var(--red)
+        }
+
+        main {
+            max-width: 1350px;
+            margin: auto;
+            padding: 22px 20px 60px
+        }
+
+        .info {
+            color: var(--mute);
+            font-size: 14px;
+            margin-bottom: 16px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 24px
+        }
+
+        .card {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            background: var(--card);
+            border: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            transition: transform .25s, box-shadow .25s, border-color .25s, opacity .3s
+        }
+
+        .card.out {
+            opacity: 0;
+            transform: scale(.85)
+        }
+
+        .card:hover {
+            transform: translateY(-7px);
+            border-color: var(--red);
+            box-shadow: 0 0 30px rgba(255, 23, 68, .6), 0 16px 34px rgba(0, 0, 0, .65)
+        }
+
+        .pic {
+            position: relative;
+            aspect-ratio: 2/3;
+            background: #1d0e15;
+            overflow: hidden
+        }
+
+        .pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform .45s
+        }
+
+        .card:hover .pic img {
+            transform: scale(1.08)
+        }
+
+        .pic::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 80px;
+            background: linear-gradient(rgba(0, 0, 0, .6), transparent);
+            pointer-events: none
+        }
+
+        .score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            background: linear-gradient(135deg, #ffb300, #ff6d00);
+            color: #1a0d00;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 0 12px rgba(255, 160, 0, .5)
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            background: var(--ok);
+            color: #042a1a;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .5px
+        }
+
+        .info {
+            padding: 14px 14px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            border-top: 2px solid var(--red);
+            background: linear-gradient(#1c0b13, var(--card))
+        }
+
+        .title {
+            font-weight: 800;
+            font-size: 15px;
+            line-height: 1.3;
+            min-height: 39px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .orig {
+            font-size: 11px;
+            color: var(--mute);
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 4px
+        }
+
+        .chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 20px;
+            background: rgba(255, 23, 68, .18);
+            border: 1px solid rgba(255, 23, 68, .45);
+            color: #ffb3c2
+        }
+
+        .chip.g {
+            background: rgba(255, 255, 255, .08);
+            border-color: rgba(255, 255, 255, .15);
+            color: #ddd
+        }
+
+        .btn {
+            margin: 12px 14px 14px;
+            border: 0;
+            padding: 11px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            color: #fff;
+            background: linear-gradient(135deg, var(--red), var(--red2));
+            font-size: 13px;
+            transition: .2s
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 20px rgba(255, 23, 68, .8);
+            transform: scale(1.02)
+        }
+
+        .btn.done {
+            background: #0f2a20;
+            color: var(--ok);
+            border: 1px solid var(--ok)
+        }
+
+        .empty,
+        .err {
+            grid-column: 1/-1;
+            text-align: center;
+            color: var(--mute);
+            padding: 80px 20px;
+            line-height: 1.8
+        }
+
+        .spin {
+            width: 36px;
+            height: 36px;
+            margin: 30px auto;
+            border: 4px solid var(--line);
+            border-top-color: var(--red);
+            border-radius: 50%;
+            animation: s 1s linear infinite;
+            filter: drop-shadow(0 0 6px var(--red))
+        }
+
+        @keyframes s {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="top">
+            <div class="logo">ANI<b>VAULT</b></div>
+            <div class="tabs">
+                <button class="tab on" data-tab="all">Все аниме</button>
+                <button class="tab" data-tab="watched">✔ Просмотрено <span id="wc">0</span></button>
+            </div>
+            <input class="search" id="q" placeholder="Поиск (по-английски или ромадзи)...">
+        </div>
+        <div class="filters">
+            <select id="genre">
+                <option value="">Все жанры</option>
+            </select>
+            <select id="format">
+                <option value="">Все форматы</option>
+            </select>
+            <select id="year">
+                <option value="">Все годы</option>
+            </select>
+            <select id="sort">
+                <option value="POPULARITY_DESC">По популярности</option>
+                <option value="SCORE_DESC">По оценке</option>
+                <option value="START_DATE_DESC">Сначала новые</option>
+                <option value="START_DATE">Сначала старые</option>
+                <option value="TITLE_ROMAJI">По алфавиту</option>
+            </select>
+        </div>
+    </header>
+    <main>
+        <div class="info" id="info"></div>
+        <div class="grid" id="grid"></div>
+        <div id="sentinel"></div>
+    </main>
+    <script>
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const GEN = { 'Action': 'Экшен', 'Adventure': 'Приключения', 'Comedy': 'Комедия', 'Drama': 'Драма', 'Ecchi': 'Эччи', 'Fantasy': 'Фэнтези', 'Horror': 'Ужасы', 'Mahou Shoujo': 'Махо-сёдзё', 'Mecha': 'Меха', 'Music': 'Музыка', 'Mystery': 'Детектив', 'Psychological': 'Психология', 'Romance': 'Романтика', 'Sci-Fi': 'Фантастика', 'Slice of Life': 'Повседневность', 'Sports': 'Спорт', 'Supernatural': 'Сверхъестественное', 'Thriller': 'Триллер' };
+        const FMT = { TV: 'Сериал', MOVIE: 'Фильм', OVA: 'OVA', ONA: 'ONA', SPECIAL: 'Спешл', TV_SHORT: 'Короткий', MUSIC: 'Клип' };
+        $('genre').innerHTML += Object.keys(GEN).filter(g => g !== 'Ecchi').map(g => `<option value="${g}">${GEN[g]}</option>`).join('');
+        $('format').innerHTML += ['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL', 'TV_SHORT'].map(f => `<option value="${f}">${FMT[f]}</option>`).join('');
+        for (let y = new Date().getFullYear() + 1; y >= 1960; y--) $('year').innerHTML += `<option>${y}</option>`;
+
+        let watched = {}, tab = 'all', page = 1, hasNext = true, loading = false, token = 0, total = 0, count = 0, cache = {};
+        try { watched = JSON.parse(localStorage.getItem('watched') || '{}'); } catch (e) { }
+        const save = () => { try { localStorage.setItem('watched', JSON.stringify(watched)); } catch (e) { } };
+
+        const QUERY = `query($page:Int,$search:String,$genre:String,$format:MediaFormat,$year:Int,$sort:[MediaSort]){
+  Page(page:$page,perPage:50){pageInfo{total hasNextPage}
+    media(type:ANIME,isAdult:false,search:$search,genre:$genre,format:$format,seasonYear:$year,sort:$sort){
+      id idMal title{romaji english} format seasonYear episodes averageScore genres coverImage{large extraLarge}}}}`;
+
+        const norm = m => ({
+            id: m.id, mal: m.idMal, title: m.title.english || m.title.romaji, orig: m.title.romaji, image: m.coverImage.extraLarge || m.coverImage.large,
+            year: m.seasonYear, format: m.format, episodes: m.episodes, score: m.averageScore, genres: m.genres || []
+        });
+
+        function cardHTML(a) {
+            const w = !!watched[a.id], f = FMT[a.format] || a.format || '';
+            const chips = [a.year ? `<span class="chip">${a.year}</span>` : '', f ? `<span class="chip">${esc(f)}</span>` : '',
+            a.episodes ? `<span class="chip">${a.episodes} эп.</span>` : '',
+            ...a.genres.slice(0, 2).map(g => `<span class="chip g">${esc(GEN[g] || g)}</span>`)].join('');
+            return `<div class="card" data-cid="${a.id}"><div class="pic"><img loading="lazy" decoding="async" src="${esc(a.image)}" alt="" onerror="this.style.opacity=.15">
+    ${a.score ? `<span class="score">★ ${(a.score / 10).toFixed(1)}</span>` : ''}${w ? '<span class="badge">ПРОСМОТРЕНО</span>' : ''}</div>
+    <div class="info"><div class="title">${esc(a.ru || a.title)}</div><div class="orig">${a.ru ? esc(a.title) : '&nbsp;'}</div>
+    <div class="chips">${chips}</div></div>
+    <button class="btn ${w ? 'done' : ''}" data-id="${a.id}">${w ? '✔ Просмотрено' : 'Посмотрено'}</button></div>`;
+        }
+        function reset() {
+            token++; page = 1; hasNext = true; count = 0; total = 0; loading = false;
+            $('grid').innerHTML = ''; $('wc').textContent = Object.keys(watched).length;
+            if (tab === 'watched') return showWatched();
+            loadMore();
+        }
+        function showWatched() {
+            const q = $('q').value.trim().toLowerCase();
+            const list = Object.values(watched).filter(a => !q || (a.title + ' ' + (a.ru || '')).toLowerCase().includes(q)).reverse();
+            $('info').textContent = `Просмотрено: ${list.length}`;
+            $('grid').innerHTML = list.map(cardHTML).join('') || '<div class="empty">Пока ничего не отмечено 👀<br>Жми «Посмотрено» на карточках аниме</div>';
+        }
+        async function addRussian(items) {
+            const ids = items.map(a => a.mal).filter(Boolean);
+            if (!ids.length) return;
+            try {
+                const r = await fetch(`https://shikimori.one/api/animes?ids=${ids.join(',')}&limit=50`);
+                const arr = await r.json(), map = {};
+                arr.forEach(x => { if (x.russian) map[x.id] = x.russian; });
+                items.forEach(a => {
+                    if (!map[a.mal]) return;
+                    a.ru = map[a.mal]; if (watched[a.id]) watched[a.id].ru = a.ru;
+                    const el = document.querySelector(`.card[data-cid="${a.id}"] .info`);
+                    if (el) { el.querySelector('.title').textContent = a.ru; el.querySelector('.orig').textContent = a.title; }
+                });
+                save();
+            } catch (e) { }
+        }
+        async function loadMore() {
+            if (loading || !hasNext || tab !== 'all') return;
+            loading = true; const my = token;
+            const sp = document.createElement('div'); sp.className = 'spin'; $('sentinel').appendChild(sp);
+            const vars = {
+                page, search: $('q').value.trim() || null, genre: $('genre').value || null,
+                format: $('format').value || null, year: +$('year').value || null, sort: [$('sort').value]
+            };
+            try {
+                const r = await fetch('https://graphql.anilist.co', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: QUERY, variables: vars }) });
+                if (r.status === 429) { await new Promise(s => setTimeout(s, 4000)); sp.remove(); loading = false; return loadMore(); }
+                const d = (await r.json()).data.Page;
+                if (my !== token) return;
+                const items = d.media.map(norm);
+                items.forEach(a => cache[a.id] = a);
+                const fresh = items.filter(a => !watched[a.id]);   // просмотренные в общей вкладке не показываем
+                $('grid').insertAdjacentHTML('beforeend', fresh.map(cardHTML).join(''));
+                count += fresh.length; hasNext = d.pageInfo.hasNextPage; total = d.pageInfo.total; page++;
+                $('info').textContent = total >= 5000 ? 'Найдено: 5000+ (выбери год или жанр, чтобы увидеть остальные)' : `Найдено: ${total}`;
+                if (!count && !hasNext) $('grid').innerHTML = '<div class="empty">Ничего не найдено 😢</div>';
+                addRussian(fresh);
+            } catch (e) {
+                if (my === token) $('grid').insertAdjacentHTML('beforeend', '<div class="err">Не удалось загрузить данные. Проверь интернет и обнови страницу.</div>');
+                hasNext = false;
+            }
+            sp.remove(); loading = false;
+            if (my === token && hasNext && $('sentinel').getBoundingClientRect().top < innerHeight + 400) loadMore();
+        }
+        $('grid').addEventListener('click', e => {
+            const b = e.target.closest('.btn'); if (!b) return;
+            const id = b.dataset.id, card = b.closest('.card');
+            if (watched[id]) { delete watched[id]; } else { watched[id] = cache[id] || watched[id]; }
+            save(); $('wc').textContent = Object.keys(watched).length;
+            card.classList.add('out');
+            setTimeout(() => { card.remove(); if (tab === 'watched' && !Object.keys(watched).length) showWatched(); }, 300);
+        });
+        document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+            t.classList.add('on'); tab = t.dataset.tab; reset();
+        });
+        let timer;
+        $('q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reset, 450); });
+        ['genre', 'format', 'year', 'sort'].forEach(id => $(id).addEventListener('change', reset));
+        new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '600px' }).observe($('sentinel'));
+        reset();
+    </script>
+</body>
+
+</html>
