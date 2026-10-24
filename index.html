@@ -472,6 +472,74 @@
         $('q').addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(reset, 450); });
         ['genre', 'format', 'year', 'sort'].forEach(id => $(id).addEventListener('change', reset));
         new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, { rootMargin: '600px' }).observe($('sentinel'));
+        /* ===== РАНДОМ + ТИТУЛЫ — вставь ПЕРЕД последней строкой reset(); ===== */
+        (() => {
+            // --- 1) Случайный порядок карточек при каждом обновлении ---
+            const sel = $('sort');
+            sel.insertAdjacentHTML('afterbegin', '<option value="RANDOM">🎲 Случайно</option>');
+            sel.value = 'RANDOM';
+            let offset = 0;
+            const _fetch = window.fetch.bind(window);
+            window.fetch = async (url, opt) => {
+                if (!String(url).includes('anilist') || !opt || !opt.body) return _fetch(url, opt);
+                const b = JSON.parse(opt.body), v = b.variables || {};
+                if (!v.sort || v.sort[0] !== 'RANDOM') return _fetch(url, opt);
+                const free = !v.search && !v.genre && !v.format && !v.year;
+                const p = v.page;
+                if (p === 1) offset = free ? Math.floor(Math.random() * 100) : 0;   // случайная стартовая страница
+                v.sort = ['POPULARITY_DESC'];
+                if (free) v.page = (offset + p - 1) % 100 + 1;
+                const r = await _fetch(url, { ...opt, body: JSON.stringify(b) });
+                if (!r.ok) return r;
+                const j = await r.json(), d = j.data.Page;
+                for (let i = d.media.length - 1; i > 0; i--) {                      // перемешиваем карточки
+                    const k = Math.floor(Math.random() * (i + 1));
+                    [d.media[i], d.media[k]] = [d.media[k], d.media[i]];
+                }
+                if (free) d.pageInfo.hasNextPage = p < 100;
+                return new Response(JSON.stringify(j), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            };
+
+            // --- 2) Титулы за количество просмотренных ---
+            const RANKS = [[10000, 'Бог аниме 👑'], [5000, 'Император отаку 🏯'], [1000, 'Легенда отаку 🔥'],
+            [500, 'Аниме-ветеран ⚔️'], [100, 'Заядлый зритель 🎬'], [50, 'Любитель аниме 🌸'], [10, 'Новичок-отаку 🍜'], [0, 'Гость 👀']];
+            document.head.insertAdjacentHTML('beforeend', `<style>
+    #rank{display:flex;flex-direction:column;gap:3px;min-width:170px;padding:6px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);box-shadow:0 0 14px rgba(255,23,68,.25)}
+    #rt{font-weight:800;font-size:13px;color:#ffd0da}
+    #rank .bar{height:5px;border-radius:5px;background:#2a0f1a;overflow:hidden}
+    #rb{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red2),var(--red));box-shadow:0 0 8px var(--red);transition:width .4s}
+    #rn{font-size:11px;color:var(--mute)}
+    #toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);z-index:99;padding:14px 26px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;font-weight:800;box-shadow:0 0 40px rgba(255,23,68,.8)}
+  </style>`);
+            $('q').insertAdjacentHTML('beforebegin', '<div id="rank"><div id="rt"></div><div class="bar"><i id="rb"></i></div><small id="rn"></small></div>');
+            let last = null;
+            const upd = () => {
+                const n = Object.keys(watched).length;
+                const i = RANKS.findIndex(r => n >= r[0]), cur = RANKS[i], next = RANKS[i - 1];
+                $('rt').textContent = '🏆 ' + cur[1];
+                $('rn').textContent = next ? `${n} / ${next[0]}` : `${n} — максимум!`;
+                $('rb').style.width = (next ? (n - cur[0]) / (next[0] - cur[0]) * 100 : 100) + '%';
+                if (last !== null && i < last) {
+                    const t = document.createElement('div'); t.id = 'toast'; t.textContent = '🎉 Новый титул: ' + cur[1];
+                    document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+                }
+                last = i;
+            };
+            new MutationObserver(upd).observe($('wc'), { childList: true, characterData: true, subtree: true });
+            upd();
+        })();
+
+        /* ===== ЗАПОМИНАТЬ ФИЛЬТРЫ (localStorage) — вставь ПЕРЕД reset(); и ПОСЛЕ блока рандома ===== */
+        (() => {
+            const ids = ['genre', 'format', 'year', 'sort'];
+            try {
+                const saved = JSON.parse(localStorage.getItem('filters') || '{}');
+                ids.forEach(id => { if (saved[id] !== undefined && [...$(id).options].some(o => o.value === saved[id])) $(id).value = saved[id]; });
+            } catch (e) { }
+            ids.forEach(id => $(id).addEventListener('change', () => {
+                try { const s = {}; ids.forEach(k => s[k] = $(k).value); localStorage.setItem('filters', JSON.stringify(s)); } catch (e) { }
+            }));
+        })();
         reset();
     </script>
 </body>
