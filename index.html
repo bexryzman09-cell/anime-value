@@ -329,6 +329,100 @@
                 transform: rotate(360deg)
             }
         }
+
+        @media(max-width:700px) {
+            header {
+                position: relative;
+                padding: 10px 12px
+            }
+
+            .top {
+                gap: 8px
+            }
+
+            .logo {
+                font-size: 22px;
+                width: 100%;
+                text-align: center
+            }
+
+            .tabs {
+                width: 100%
+            }
+
+            .tab {
+                flex: 1;
+                padding: 9px 6px;
+                font-size: 13px
+            }
+
+            #rank {
+                width: 100%
+            }
+
+            .search {
+                min-width: 100%;
+                padding: 11px 14px
+            }
+
+            .filters {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px
+            }
+
+            select {
+                width: 100%;
+                padding: 10px 8px;
+                font-size: 13px
+            }
+
+            main {
+                padding: 14px 12px 40px
+            }
+
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px
+            }
+
+            .info {
+                padding: 10px 10px 0
+            }
+
+            .title {
+                font-size: 13px;
+                min-height: 34px
+            }
+
+            .chip {
+                font-size: 10px;
+                padding: 2px 7px
+            }
+
+            .btn {
+                margin: 10px 10px 12px;
+                padding: 10px;
+                font-size: 12px
+            }
+
+            .card:hover {
+                transform: none
+            }
+
+            #toast {
+                width: 90%;
+                text-align: center;
+                padding: 12px
+            }
+        }
+
+        @media(min-width:1500px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
+            }
+        }
     </style>
 </head>
 
